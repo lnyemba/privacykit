@@ -1,3 +1,7 @@
 # deid-risk
 
-This repository is dedicated to compute risk for a given database
+This project is intended to compute an estimated value of risk for a given database.
+
+    1. Pull meta data of the database and create a dataset via joins
+    2. Generate the dataset
+    3. Compute risk via SQL using group by
