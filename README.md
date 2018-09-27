@@ -17,11 +17,12 @@ This project is intended to compute an estimated value of risk for a given datab
         
 ## Usage
 
-    *Generate The merged dataset
+*Generate The merged dataset
     
     python risk.py create --i_dataset <in dataset|schema> --o_dataset <out dataset|schema> --table <name> --path <bigquery-key-file>  --key <patient-id-field-name> [--file ]
 
-    * Compute risk (marketer, prosecutor)
+
+* * Compute risk (marketer, prosecutor)
 
     python risk.py compute --i_dataset <dataset> --table <name> --path <bigquery-key-file>  --key <patient-id-field-name> 
 ## Limitations
