@@ -72,20 +72,20 @@ class deid :
         return r
 
 
-import pandas as pd
-import numpy as np
-from io import StringIO
-csv = """
-id,sex,age,profession,drug_test
-1,M,37,doctor,-
-2,F,28,doctor,+
-3,M,37,doctor,-
-4,M,28,doctor,+
-5,M,28,doctor,-
-6,M,37,doctor,-
-"""
-f = StringIO()
-f.write(unicode(csv))
-f.seek(0)
-df = pd.read_csv(f)     
-print df.deid.risk(id='id',num_runs=1)   
+# import pandas as pd
+# import numpy as np
+# from io import StringIO
+# csv = """
+# id,sex,age,profession,drug_test
+# 1,M,37,doctor,-
+# 2,F,28,doctor,+
+# 3,M,37,doctor,-
+# 4,M,28,doctor,+
+# 5,M,28,doctor,-
+# 6,M,37,doctor,-
+# """
+# f = StringIO()
+# f.write(unicode(csv))
+# f.seek(0)
+# df = pd.read_csv(f)     
+# print df.deid.risk(id='id',num_runs=2)   
