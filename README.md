@@ -1,34 +1,16 @@
 # deid-risk
 
-This project is intended to compute an estimated value of risk for a given database.
+The code below extends a data-frame by adding it the ability to compute de-identification risk (marketer, prosecutor).
+Because data-frames can connect to any database/file it will be the responsibility of the user to load the dataset into a data-frame.
 
-    1. Pull meta data of the database  and create a dataset via joins
-    2. Generate the dataset with random selection of features
-    3. Compute risk via SQL using group by
-## Python environment
+Basic examples that illustrate usage of the the framework are in the notebook folder. The example is derived from 
+[http://ehelthinformation.ca](http://www.ehealthinformation.ca/wp-content/uploads/2014/08/2009-De-identification-PA-whitepaper1.pdf)
 
-The following are the dependencies needed to run the code:
+Dependencies:
+	numpy 
+	pandas
+	
+Limitations:
 
-        pandas
-        numpy
-        pandas-gbq
-        google-cloud-bigquery
-
-        
-## Usage
-
-**Generate The merged dataset**
-
-    python risk.py create --i_dataset <in dataset|schema> --o_dataset <out dataset|schema> --table <name> --path <bigquery-key-file>  --key <patient-id-field-name> [--file ]
-
-
-**Compute risk (marketer, prosecutor)**
-
-    python risk.py compute --i_dataset <dataset> --table <name> --path <bigquery-key-file>  --key <patient-id-field-name> 
-## Limitations
-    - It works against bigquery for now
-    
     @TODO:    
-        - Need to write a transport layer (database interface)
-        - Support for referential integrity, so one table can be selected and a dataset derived given referential integrity
         - Add support for journalist risk
