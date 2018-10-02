@@ -35,25 +35,32 @@ class deid :
         """
             @param  id          name of patient field            
             @params num_runs    number of runs (default will be 100)
+	    @params quasi_id 	list of quasi identifiers to be used (this will only perform a single run)
         """
         
         id  = args['id']
-        
-        num_runs  = args['num_runs'] if 'num_runs' in args else 100
+        if 'quasi_id' in args :
+		num_runs = 1
+		columns = list(set(args['quasi_id'])- set(id) )
+	else :
+		num_runs  = args['num_runs'] if 'num_runs' in args else 100
+		columns = list(set(self._df.columns) - set([id]))
         r   = pd.DataFrame()
         
-        columns = list(set(self._df.columns) - set([id]))
         k = len(columns)
         for i in range(0,num_runs) :
             #
             # let's chose a random number of columns and compute marketer and prosecutor risk
             # Once the fields are selected we run a groupby clause
             #
-
-            n   = np.random.randint(2,k) #-- number of random fields we are picking
-            ii = np.random.choice(k,n,replace=False)
-            cols = np.array(columns)[ii].tolist()
-            x_ = self._df.groupby(cols).count()[id].values
+	    if 'quasi_id' not in args :
+		    n   = np.random.randint(2,k) #-- number of random fields we are picking
+		    ii = np.random.choice(k,n,replace=False)
+		    cols = np.array(columns)[ii].tolist()
+            else:
+	    	cols 	= columns
+		n 	= len(cols)
+	    x_ = self._df.groupby(cols).count()[id].values
             r = r.append(
                 pd.DataFrame(
                     [
@@ -72,20 +79,22 @@ class deid :
         return r
 
 
-# import pandas as pd
-# import numpy as np
-# from io import StringIO
-# csv = """
-# id,sex,age,profession,drug_test
-# 1,M,37,doctor,-
-# 2,F,28,doctor,+
-# 3,M,37,doctor,-
-# 4,M,28,doctor,+
-# 5,M,28,doctor,-
-# 6,M,37,doctor,-
-# """
-# f = StringIO()
-# f.write(unicode(csv))
-# f.seek(0)
-# df = pd.read_csv(f)     
-# print df.deid.risk(id='id',num_runs=2)   
+import pandas as pd
+import numpy as np
+from io import StringIO
+csv = """
+id,sex,age,profession,drug_test
+1,M,37,doctor,-
+2,F,28,doctor,+
+3,M,37,doctor,-
+4,M,28,doctor,+
+5,M,28,doctor,-
+6,M,37,doctor,-
+"""
+f = StringIO()
+f.write(unicode(csv))
+f.seek(0)
+df = pd.read_csv(f)     
+print df.deid.risk(id='id',num_runs=2)   
+print " *** "
+print df.deid.risk(id='id',quasi_id=['sex','age','profession'])
