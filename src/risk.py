@@ -229,17 +229,19 @@ if 'action' in SYS_ARGS and  SYS_ARGS['action'] in ['create','compute','migrate'
         o_dataset = SYS_ARGS['o_dataset']
         for table in tables:
             sql = " ".join(["SELECT ",",".join(table['fields']) ," FROM (",mytools.get_filtered_table(table,key),") as ",table['name']])
-            
-            job = bq.QueryJobConfig()
-            job.destination = client.dataset(o_dataset).table(table['name'])
-            job.use_query_cache = True
-            job.allow_large_results = True 
-            job.priority = 'INTERACTIVE'
-            job.time_partitioning = bq.table.TimePartitioning(type_=bq.table.TimePartitioningType.DAY)
+            print ""
+            print sql
+            print ""
+            # job = bq.QueryJobConfig()
+            # job.destination = client.dataset(o_dataset).table(table['name'])
+            # job.use_query_cache = True
+            # job.allow_large_results = True 
+            # job.priority = 'INTERACTIVE'
+            # job.time_partitioning = bq.table.TimePartitioning(type_=bq.table.TimePartitioningType.DAY)
 
-            r = client.query(sql,location='US',job_config=job) 
+            # r = client.query(sql,location='US',job_config=job) 
             
-            print [table['full_name'],' ** ',r.job_id,' ** ',r.state]
+            # print [table['full_name'],' ** ',r.job_id,' ** ',r.state]
 
 
         pass
