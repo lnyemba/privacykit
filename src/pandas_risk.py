@@ -22,16 +22,108 @@
 """
 import pandas as pd
 import numpy as np
-
+import time
 @pd.api.extensions.register_dataframe_accessor("deid")
 class deid :
     """
         This class is a deidentification class that will compute risk (marketer, prosecutor) given a pandas dataframe
     """
     def __init__(self,df):
-        self._df = df
+        self._df = df.fillna(' ')
+    def explore(self,**args):
+        """
+        This function will perform experimentation by performing a random policies (combinations of attributes)
+        This function is intended to explore a variety of policies and evaluate their associated risk.
+
+        @param pop|sample   data-frame with popublation reference
+        @param id       key field that uniquely identifies patient/customer ...
+        """
+        # id = args['id']
+        pop= args['pop'] if 'pop' in args else None
+        # if 'columns' in args :
+        #     cols = args['columns']
+        #     params = {"sample":args['data'],"cols":cols}
+        #     if pop is not None :
+        #         params['pop'] = pop
+        #     return self.evaluate(**params)
+        # else :
+        #
+        # Policies will be generated with a number of runs
+        #
+        RUNS = args['num_runs'] if 'num_runs' in args else 5
+        
+        sample = args['sample'] if 'sample' in args else pd.DataFrame(self._df)
+        
+        k = sample.columns.size -1 if 'field_count' not in args else int(args['field_count'])
+        columns = list(set(sample.columns.tolist()) - set([id]))
+        o = pd.DataFrame()
+        # pop = args['pop'] if 'pop' in args else None
+        for i in np.arange(RUNS):
+            n = np.random.randint(2,k)
+            
+            cols = np.random.choice(columns,n,replace=False).tolist()            
+            params = {'sample':sample,'cols':cols}
+            if pop is not None :
+                params['pop'] = pop
+            r = self.evaluate(**params)
+            #
+            # let's put the policy in place
+            p =  pd.DataFrame(1*sample.columns.isin(cols)).T
+            p.columns = sample.columns
+            o = o.append(r.join(p))
+            
+        o.index = np.arange(o.shape[0]).astype(np.int64)
+
+        return o
+    def evaluate(self,**args) :
+        """
+        This function will compute the marketer, if a population is provided it will evaluate the marketer risk relative to both the population and sample
+        @param smaple  data-frame with the data to be processed
+        @param policy   the columns to be considered.
+        @param pop      population dataset
+        @params flag    user defined flag (no computation use)
+        """
+        if (args and 'sample' not in args) or not args :
+            x_i = pd.DataFrame(self._df)
+        elif args and 'sample' in args :
+            x_i = args['sample']
+        if (args and 'cols' not in args) or not args :
+            cols = x_i.columns.tolist()
+            # cols = self._df.columns.tolist()
+        elif args and 'cols' in args :
+            cols = args['cols']
+        flag = args['flag'] if 'flag' in args else 'UNFLAGGED'
+        # if args and 'sample' in args :
+            
+        #     x_i     = pd.DataFrame(self._df)
+        # else :
+        #     cols    = args['cols'] if 'cols' in args else self._df.columns.tolist()
+        # x_i     = x_i.groupby(cols,as_index=False).size().values 
+        x_i_values = x_i.groupby(cols,as_index=False).size().values
+        SAMPLE_GROUP_COUNT = x_i_values.size
+        SAMPLE_FIELD_COUNT = len(cols)
+        SAMPLE_POPULATION  = x_i_values.sum()
+        
+        SAMPLE_MARKETER    = SAMPLE_GROUP_COUNT / np.float64(SAMPLE_POPULATION)
+        SAMPLE_PROSECUTOR  = 1/ np.min(x_i_values).astype(np.float64)
+        if 'pop' in args :
+            Yi = args['pop']            
+            y_i= pd.DataFrame({"group_size":Yi.groupby(cols,as_index=False).size()}).reset_index()
+            # y_i['group'] = pd.DataFrame({"group_size":args['pop'].groupby(cols,as_index=False).size().values}).reset_index()
+            # x_i = pd.DataFrame({"group_size":x_i.groupby(cols,as_index=False).size().values}).reset_index()
+            x_i = pd.DataFrame({"group_size":x_i.groupby(cols,as_index=False).size()}).reset_index()
+            SAMPLE_RATIO = int(100 * x_i.size/args['pop'].shape[0])
+            r = pd.merge(x_i,y_i,on=cols,how='inner')
+            r['marketer'] = r.apply(lambda row: (row.group_size_x / np.float64(row.group_size_y)) /np.sum(x_i.group_size) ,axis=1)
+            r['sample %'] = np.repeat(SAMPLE_RATIO,r.shape[0])
+            r['tier'] = np.repeat(flag,r.shape[0])
+            r['sample marketer'] =  np.repeat(SAMPLE_MARKETER,r.shape[0])
+            r = r.groupby(['sample %','tier','sample marketer'],as_index=False).sum()[['sample %','marketer','sample marketer','tier']]
+        else:
+            r = pd.DataFrame({"marketer":[SAMPLE_MARKETER],"prosecutor":[SAMPLE_PROSECUTOR],"field_count":[SAMPLE_FIELD_COUNT],"group_count":[SAMPLE_GROUP_COUNT]})
+        return r
     
-    def risk(self,**args):
+    def _risk(self,**args):
         """
             @param  id          name of patient field            
             @params num_runs    number of runs (default will be 100)
@@ -50,7 +142,7 @@ class deid :
         k = len(columns)
         N = self._df.shape[0]
         tmp = self._df.fillna(' ')
-        np.random.seed(1)
+        np.random.seed(int(time.time()) )
         for i in range(0,num_runs) :
             
             #
@@ -85,6 +177,7 @@ class deid :
                     [
                         {
                             "group_count":x_.size,
+                            
                             "patient_count":N,
                             "field_count":n,
                             "marketer": x_.size / np.float64(np.sum(x_)),
