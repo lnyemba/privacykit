@@ -87,12 +87,13 @@ class deid :
             x_i = pd.DataFrame(self._df)
         elif args and 'sample' in args :
             x_i = args['sample']
-        if (args and 'cols' not in args) or not args :
+        if not args  or 'cols' not in args:
             cols = x_i.columns.tolist()
             # cols = self._df.columns.tolist()
         elif args and 'cols' in args :
             cols = args['cols']
         flag = args['flag'] if 'flag' in args else 'UNFLAGGED'
+        MIN_GROUP_SIZE = args['min_group_size'] if 'min_group_size' in args else 1
         # if args and 'sample' in args :
             
         #     x_i     = pd.DataFrame(self._df)
@@ -100,15 +101,16 @@ class deid :
         #     cols    = args['cols'] if 'cols' in args else self._df.columns.tolist()
         # x_i     = x_i.groupby(cols,as_index=False).size().values 
         x_i_values = x_i.groupby(cols,as_index=False).size().values
-        SAMPLE_GROUP_COUNT = x_i_values.size
+        SAMPLE_GROUP_COUNT = x_i_values.size        
         SAMPLE_FIELD_COUNT = len(cols)
         SAMPLE_POPULATION  = x_i_values.sum()
-        
+        UNIQUE_REC_RATIO = np.divide(np.sum(x_i_values <= MIN_GROUP_SIZE) , np.float64( SAMPLE_POPULATION))
         SAMPLE_MARKETER    = SAMPLE_GROUP_COUNT / np.float64(SAMPLE_POPULATION)
         SAMPLE_PROSECUTOR  = 1/ np.min(x_i_values).astype(np.float64)
         if 'pop' in args :
             Yi = args['pop']            
             y_i= pd.DataFrame({"group_size":Yi.groupby(cols,as_index=False).size()}).reset_index()
+            UNIQUE_REC_RATIO  = np.sum(y_i.group_size < MIN_GROUP_SIZE) , np.float64(Yi.shape[0])
             # y_i['group'] = pd.DataFrame({"group_size":args['pop'].groupby(cols,as_index=False).size().values}).reset_index()
             # x_i = pd.DataFrame({"group_size":x_i.groupby(cols,as_index=False).size().values}).reset_index()
             x_i = pd.DataFrame({"group_size":x_i.groupby(cols,as_index=False).size()}).reset_index()
@@ -120,7 +122,8 @@ class deid :
             r['sample marketer'] =  np.repeat(SAMPLE_MARKETER,r.shape[0])
             r = r.groupby(['sample %','tier','sample marketer'],as_index=False).sum()[['sample %','marketer','sample marketer','tier']]
         else:
-            r = pd.DataFrame({"marketer":[SAMPLE_MARKETER],"prosecutor":[SAMPLE_PROSECUTOR],"field_count":[SAMPLE_FIELD_COUNT],"group_count":[SAMPLE_GROUP_COUNT]})
+            r = pd.DataFrame({"marketer":[SAMPLE_MARKETER],"flag":[flag],"prosecutor":[SAMPLE_PROSECUTOR],"field_count":[SAMPLE_FIELD_COUNT],"group_count":[SAMPLE_GROUP_COUNT]})
+        r['unique_row_ratio'] = np.repeat(UNIQUE_REC_RATIO,r.shape[0])
         return r
     
     def _risk(self,**args):
