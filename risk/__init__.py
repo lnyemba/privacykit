@@ -48,4 +48,4 @@ mydf.risk.evaluate(pop=pop)
     - Evaluation of how sparse attributes are (the ratio of non-null over rows)
     - Have a smart way to drop attributes (based on the above in random policy search)
 """
-
+from risk import *
