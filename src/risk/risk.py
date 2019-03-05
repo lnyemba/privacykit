@@ -26,7 +26,8 @@
     from pandas_risk import *
 
     mydataframe = pd.DataFrame('/myfile.csv')
-    risk = mydataframe.deid.risk(id=<name of patient field>,num_runs=<number of runs>)
+    resp = mydataframe.risk.evaluate(id=<name of patient field>,num_runs=<number of runs>,cols=[])
+    resp = mydataframe.risk.explore(id=<name of patient field>,num_runs=<number of runs>,cols=[])
 
 
     @TODO:
@@ -41,8 +42,8 @@ import json
 from datetime import datetime
 import sys
 
-sys.setrecursionlimit(3000)
-@pd.api.extensions.register_dataframe_accessor("deid")
+
+@pd.api.extensions.register_dataframe_accessor("risk")
 class deid :
 
     """
@@ -151,8 +152,10 @@ class deid :
                 handle_sample.set('pop_size',pop_size)
                 r['pitman risk'] = handle_sample.pitman()
         if 'pop' in args :
+            print cols
+            print args['pop'].columns
             xi = pd.DataFrame({"sample_group_size":sample.groupby(cols,as_index=False).size()}).reset_index()
-            yi = pd.DataFrame({"population_group_size":args['population'].groupby(cols,as_index=False).size()}).reset_index()
+            yi = pd.DataFrame({"population_group_size":args['pop'].groupby(cols,as_index=False).size()}).reset_index()
             merged_groups = pd.merge(xi,yi,on=cols,how='inner')
             handle_population= Population()            
             handle_population.set('merged_groups',merged_groups)
@@ -227,9 +230,11 @@ class Population(Sample):
         Sample.__init__(self)
 
     def set(self,key,value):
-        Sample.set(key,value)
-        if key == 'merged_groups' :
-            Sample.set('pop_size',np.float64(r.population_group_sizes.sum()) )
+        Sample.set(self,key,value)
+        if key == 'merged_groups' :  
+               
+            Sample.set(self,'pop_size',np.float64(value.population_group_size.sum()) )
+            Sample.set(self,'groups',value.sample_group_size)
     """
     This class will measure risk and account for the existance of a population
     :merged_groups {sample_group_size, population_group_size} is a merged dataset with group sizes of both population and sample
@@ -244,3 +249,5 @@ class Population(Sample):
         # @TODO : make sure the above line is size (not sum)
         # sample_row_count = r.sample_group_size.size
         return r.apply(lambda row: (row.sample_group_size / np.float64(row.population_group_size)) /np.float64(sample_row_count) ,axis=1).sum()
+
+
