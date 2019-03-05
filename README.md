@@ -23,6 +23,17 @@ Here the assumption is that we are clear on the sets of attributes to be used an
 
 ### Usage:
 
+Install this package using pip as follows :
+
+Stable :
+    
+    pip install git+https://hiplab.mc.vanderbilt.edu/git/steve/deid-risk.git
+    
+    
+Latest Development (not fully tested):
+    
+    pip install git+https://hiplab.mc.vanderbilt.edu/git/steve/deid-risk.git@risk
+    
 The framework will depend on pandas and numpy (for now). Below is a basic sample to get started quickly.
 
 
