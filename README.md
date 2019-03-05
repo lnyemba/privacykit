@@ -1,33 +1,29 @@
 # Re-Identification Risk
 
-This framework computes re-identification risk of a dataset assuming the data being shared can be loaded into a dataframe (pandas)
-The framework will compute the following risk measures:
-    - marketer
-    - prosecutor
-    - pitman
+This framework computes re-identification risk of a dataset by extending pandas. It works like a pandas **add-on** 
+The framework will compute the following risk measures: marketer, prosecutor, journalist and pitman risk.
+There are two modes available :
+    
+**explore:**
 
-References :
+        Here the assumption is that we are not sure of the attributes to be disclosed, 
+        The framework will explore a variety of combinations and associate risk measures every random combinations it can come up with
 
-    [http://ehelthinformation.ca](http://www.ehealthinformation.ca/wp-content/uploads/2014/08/2009-De-identification-PA-whitepaper1.pdf)
-    [https://www.scb.se/contentassets](https://www.scb.se/contentassets/ff271eeeca694f47ae99b942de61df83/applying-pitmans-sampling-formula-to-microdata-disclosure-risk-assessment.pdf)
+**evaluation**
 
-This framework integrates pandas (for now) as an extension and can be used in two modes :
-* 1. explore: *
-    Here the assumption is that we are not sure of the attributes to be disclosed, 
-    The framework will explore a variety of combinations and associate risk measures every random combinations it can come up with
-
-* 2. evaluation: *
-    Here the assumption is that we are clear on the sets of attributes to be used and we are interested in computing the associated risk.
+        Here the assumption is that we are clear on the sets of attributes to be used and we are interested in computing the associated risk.
 
 
-# Four risk measures are computed :
+### Four risk measures are computed :
 
     - Marketer risk
     - Prosecutor risk
     - Journalist risk
     - Pitman Risk
 
-# Usage:
+### Usage:
+
+The framework will depend on pandas and numpy (for now)
 
     import numpy as np
     import pandas as pd
@@ -46,17 +42,15 @@ This framework integrates pandas (for now) as an extension and can be used in tw
     pop = pd.DataFrame({"x":np.random.choice( np.random.randint(1,10),150),"y":np.random.choice( np.random.randint(1,10),150) ,"q":np.random.choice( np.random.randint(1,10),150)})
     mydf.risk.evaluate(pop=pop)
 
+### References :
+
+[http://ehelthinformation.ca] (http://www.ehealthinformation.ca/wp-content/uploads/2014/08/2009-De-identification-PA-whitepaper1.pdf)
+
+[https://www.scb.se/contentassets](https://www.scb.se/contentassets/ff271eeeca694f47ae99b942de61df83/applying-pitmans-sampling-formula-to-microdata-disclosure-risk-assessment.pdf)
+
 @TODO:
     - Evaluation of how sparse attributes are (the ratio of non-null over rows)
     - Have a smart way to drop attributes (based on the above in random policy search)
 Basic examples that illustrate usage of the the framework are in the notebook folder. The example is derived from 
 
-
-Dependencies:
-	numpy 
-	pandas
 	
-Limitations:
-
-    @TODO:    
-        - Add support for journalist risk
