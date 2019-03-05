@@ -9,6 +9,6 @@ setup(
     author = "Health Information Privacy Lab",
     author_email = "steve.l.nyemba@vanderbilt.edu",
     license = "MIT",
-
+    packages=['risk'],
     install_requires = ['numpy','pandas']
     )
