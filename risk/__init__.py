@@ -66,4 +66,4 @@ Basic examples that illustrate usage of the the framework are in the notebook fo
 
 	
 """
-from risk import risk
+from risk import deid
