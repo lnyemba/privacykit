@@ -76,7 +76,7 @@ class deid :
         
         sample = args['sample'] if 'sample' in args else pd.DataFrame(self._df)
         
-        k = sample.columns.size -1 if 'field_count' not in args else int(args['field_count'])
+        k = sample.columns.size if 'field_count' not in args else int(args['field_count']) + 1
         if 'id' in args :
             id = args['id']
             columns = list(set(sample.columns.tolist()) - set([id]))
