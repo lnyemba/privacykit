@@ -1,13 +1,27 @@
 """
     Health Information Privacy Lab
-    Steve L. Nyemba & Brad. Malin
+    Brad. Malin, Weiyi Xia, Steve L. Nyemba
 
+    This framework computes re-identification risk of a dataset assuming the data being shared can be loaded into a dataframe (pandas)
+    The framework will compute the following risk measures:
+        - marketer
+        - prosecutor
+        - pitman
 
-    This is an extension to the pandas data-frame that will perform a risk assessment on a variety of attributes
-    This implementation puts the responsibility on the user of the framework to join datasets and load the final results into a pandas data-frame.
+    References :
+        https://www.scb.se/contentassets/ff271eeeca694f47ae99b942de61df83/applying-pitmans-sampling-formula-to-microdata-disclosure-risk-assessment.pdf
 
-    The code will randomly select fields and compute the risk (marketer and prosecutor) and perform a given number of runs.
+    This framework integrates pandas (for now) as an extension and can be used in two modes :
+    Experimental mode
+        Here the assumption is that we are not sure of the attributes to be disclosed, the framework will explore a variety of combinations and associate risk measures every random combinations
 
+    Evaluation mode
+        The evaluation mode assumes the set of attributes given are known and thus will evaluate risk for a subset of attributes.
+
+    features :
+        - determine viable fields (quantifiable in terms of uniqueness). This is a way to identify fields that can act as identifiers.
+        - explore and evaluate risk of a sample dataset against a known population dataset
+        - explore and evaluate risk on a sample dataset
     Usage:
     from pandas_risk import *
 
@@ -22,14 +36,21 @@
 """
 import pandas as pd
 import numpy as np
-import time
+import logging	
+import json
+from datetime import datetime
+import sys
+
+sys.setrecursionlimit(3000)
 @pd.api.extensions.register_dataframe_accessor("deid")
 class deid :
+
     """
-        This class is a deidentification class that will compute risk (marketer, prosecutor) given a pandas dataframe
+    This class is a deidentification class that will compute risk (marketer, prosecutor) given a pandas dataframe
     """
     def __init__(self,df):
         self._df = df.fillna(' ')
+
     def explore(self,**args):
         """
         This function will perform experimentation by performing a random policies (combinations of attributes)
@@ -38,15 +59,15 @@ class deid :
         @param pop|sample   data-frame with popublation reference
         @param id       key field that uniquely identifies patient/customer ...
         """
-        # id = args['id']
+        id = args['id']
         pop= args['pop'] if 'pop' in args else None
-        # if 'columns' in args :
-        #     cols = args['columns']
-        #     params = {"sample":args['data'],"cols":cols}
-        #     if pop is not None :
-        #         params['pop'] = pop
-        #     return self.evaluate(**params)
-        # else :
+        
+        if 'pop_size' in args :
+            pop_size = np.float64(args['pop_size'])
+        else:
+            pop_size = -1
+        
+        
         #
         # Policies will be generated with a number of runs
         #
@@ -57,7 +78,7 @@ class deid :
         k = sample.columns.size -1 if 'field_count' not in args else int(args['field_count'])
         columns = list(set(sample.columns.tolist()) - set([id]))
         o = pd.DataFrame()
-        # pop = args['pop'] if 'pop' in args else None
+        
         for i in np.arange(RUNS):
             n = np.random.randint(2,k)
             
@@ -65,6 +86,9 @@ class deid :
             params = {'sample':sample,'cols':cols}
             if pop is not None :
                 params['pop'] = pop
+            if pop_size > 0  :
+                params['pop_size'] = pop_size
+
             r = self.evaluate(**params)
             #
             # let's put the policy in place
@@ -75,137 +99,148 @@ class deid :
         o.index = np.arange(o.shape[0]).astype(np.int64)
 
         return o
-    def evaluate(self,**args) :
+    def evaluate(self, **args):
         """
-        This function will compute the marketer, if a population is provided it will evaluate the marketer risk relative to both the population and sample
-        @param smaple  data-frame with the data to be processed
-        @param policy   the columns to be considered.
-        @param pop      population dataset
-        @params flag    user defined flag (no computation use)
+        This function has the ability to evaluate risk associated with either a population or a sample dataset
+        :sample sample dataset
+        :pop    population dataset
+        :cols   list of columns of interest or policies
+        :flag   user provided flag for the context of the evaluation
         """
-        if (args and 'sample' not in args) or not args :
-            x_i = pd.DataFrame(self._df)
-        elif args and 'sample' in args :
-            x_i = args['sample']
-        if not args  or 'cols' not in args:
-            cols = x_i.columns.tolist()
-            # cols = self._df.columns.tolist()
-        elif args and 'cols' in args :
-            cols = args['cols']
-        flag = args['flag'] if 'flag' in args else 'UNFLAGGED'
-        MIN_GROUP_SIZE = args['min_group_size'] if 'min_group_size' in args else 1
-        # if args and 'sample' in args :
-            
-        #     x_i     = pd.DataFrame(self._df)
-        # else :
-        #     cols    = args['cols'] if 'cols' in args else self._df.columns.tolist()
-        # x_i     = x_i.groupby(cols,as_index=False).size().values 
-        x_i_values = x_i.groupby(cols,as_index=False).size().values
-        SAMPLE_GROUP_COUNT = x_i_values.size        
-        SAMPLE_FIELD_COUNT = len(cols)
-        SAMPLE_POPULATION  = x_i_values.sum()
-        UNIQUE_REC_RATIO = np.divide(np.sum(x_i_values <= MIN_GROUP_SIZE) , np.float64( SAMPLE_POPULATION))
-        SAMPLE_MARKETER    = SAMPLE_GROUP_COUNT / np.float64(SAMPLE_POPULATION)
-        SAMPLE_PROSECUTOR  = 1/ np.min(x_i_values).astype(np.float64)
-        if 'pop' in args :
-            Yi = args['pop']            
-            y_i= pd.DataFrame({"group_size":Yi.groupby(cols,as_index=False).size()}).reset_index()
-            UNIQUE_REC_RATIO  = np.sum(y_i.group_size < MIN_GROUP_SIZE) , np.float64(Yi.shape[0])
-            # y_i['group'] = pd.DataFrame({"group_size":args['pop'].groupby(cols,as_index=False).size().values}).reset_index()
-            # x_i = pd.DataFrame({"group_size":x_i.groupby(cols,as_index=False).size().values}).reset_index()
-            x_i = pd.DataFrame({"group_size":x_i.groupby(cols,as_index=False).size()}).reset_index()
-            SAMPLE_RATIO = int(100 * x_i.size/args['pop'].shape[0])
-            r = pd.merge(x_i,y_i,on=cols,how='inner')
-            r['marketer'] = r.apply(lambda row: (row.group_size_x / np.float64(row.group_size_y)) /np.sum(x_i.group_size) ,axis=1)
-            r['sample %'] = np.repeat(SAMPLE_RATIO,r.shape[0])
-            r['tier'] = np.repeat(flag,r.shape[0])
-            r['sample marketer'] =  np.repeat(SAMPLE_MARKETER,r.shape[0])
-            r = r.groupby(['sample %','tier','sample marketer'],as_index=False).sum()[['sample %','marketer','sample marketer','tier']]
+        if 'sample' in args :
+            sample = pd.DataFrame(args['sample'])
         else:
-            r = pd.DataFrame({"marketer":[SAMPLE_MARKETER],"flag":[flag],"prosecutor":[SAMPLE_PROSECUTOR],"field_count":[SAMPLE_FIELD_COUNT],"group_count":[SAMPLE_GROUP_COUNT]})
-        r['unique_row_ratio'] = np.repeat(UNIQUE_REC_RATIO,r.shape[0])
-        return r
-    
-    def _risk(self,**args):
-        """
-            @param  id          name of patient field            
-            @params num_runs    number of runs (default will be 100)
-	    @params quasi_id 	list of quasi identifiers to be used (this will only perform a single run)
-        """
-        
-        id  = args['id']
-        if 'quasi_id' in args :
-            num_runs = 1
-            columns = list(set(args['quasi_id'])- set(id) )
-        else :
-            num_runs  = args['num_runs'] if 'num_runs' in args else 100
-            columns = list(set(self._df.columns) - set([id]))
-        
-        r   = pd.DataFrame()    
-        k = len(columns)
-        N = self._df.shape[0]
-        tmp = self._df.fillna(' ')
-        np.random.seed(int(time.time()) )
-        for i in range(0,num_runs) :
+            sample = pd.DataFrame(self._df)
+
+        if not args  or 'cols' not in args:
+            cols = sample.columns.tolist()
+        elif args and 'cols' in args:
+            cols = args['cols']
+        flag = 'UNFLAGGED' if 'flag' not in args else args['flag']
+        #
+        # @TODO: auto select the columns i.e removing the columns that will have the effect of an identifier
+        #
+        # if 'population' in args :
+        #     pop = pd.DataFrame(args['population'])
+        r = {"flag":flag}
+        # if sample :
+
+        handle_sample   = Sample()
+        xi              = sample.groupby(cols,as_index=False).size().values
+
+        handle_sample.set('groups',xi)
+        if 'pop_size' in args :
+            pop_size = np.float64(args['pop_size'])
+        else:
+            pop_size = -1
+        #
+        #-- The following conditional line is to address the labels that will be returned
+        # @TODO: Find a more elegant way of doing this.
+        #
+        if 'pop' in args :
+            r['sample marketer']   = handle_sample.marketer()
+            r['sample prosecutor'] = handle_sample.prosecutor()
+            r['sample unique ratio']     = handle_sample.unique_ratio()
+            r['sample group count'] = xi.size
+        else:
+            r['marketer']   = handle_sample.marketer()
+            r['prosecutor'] = handle_sample.prosecutor()
+            r['unique ratio']     = handle_sample.unique_ratio()
+            r['group count'] =  xi.size
+            if pop_size > 0 :
+                handle_sample.set('pop_size',pop_size)
+                r['pitman risk'] = handle_sample.pitman()
+        if 'pop' in args :
+            xi = pd.DataFrame({"sample_group_size":sample.groupby(cols,as_index=False).size()}).reset_index()
+            yi = pd.DataFrame({"population_group_size":args['population'].groupby(cols,as_index=False).size()}).reset_index()
+            merged_groups = pd.merge(xi,yi,on=cols,how='inner')
+            handle_population= Population()            
+            handle_population.set('merged_groups',merged_groups)
             
-            #
-            # let's chose a random number of columns and compute marketer and prosecutor risk
-            # Once the fields are selected we run a groupby clause
-            #
-            if 'quasi_id' not in args :
-                if 'field_count' in args :
-                    #
-                    # We chose to limit how many fields we passin
-                    n   = np.random.randint(2,int(args['field_count'])) #-- number of random fields we are picking    
-                else :
-                    n   = np.random.randint(2,k) #-- number of random fields we are picking
-                ii = np.random.choice(k,n,replace=False)
-                cols = np.array(columns)[ii].tolist()
-                policy = np.zeros(k)
-                policy [ii]  = 1
-                policy =  pd.DataFrame(policy).T
+            r['pop. marketer'] = handle_population.marketer()            
+            r['pitman risk'] = handle_population.pitman()
+            r['pop. group size'] = np.unique(yi.population_group_size).size
+        #
+        # At this point we have both columns for either sample,population or both
+        #
+        r['field count'] = len(cols)
+        return pd.DataFrame([r])
 
-            else:
-                cols 	= columns
-                policy = np.ones(k)
-                policy = pd.DataFrame(policy).T
-            n 	= len(cols)
-            policy.columns = columns
-            N = tmp.shape[0]
+class Risk :
+    """
+    This class is an abstraction of how we chose to structure risk computation i.e in 2 sub classes:
+        - Sample        computes risk associated with a sample dataset only
+        - Population    computes risk associated with a population
+    """
+    def __init__(self):
+        self.cache = {}        
+    def set(self,key,value):        
+        if id not in self.cache :
+            self.cache[id] = {}
+        self.cache[key] = value
 
-            x_ = tmp.groupby(cols).size().values
-            # print [id,i,n,k,self._df.groupby(cols).count()]
-            r = r.append(
-                pd.DataFrame(
-                    [
-                        {
-                            "group_count":x_.size,
-                            
-                            "patient_count":N,
-                            "field_count":n,
-                            "marketer": x_.size / np.float64(np.sum(x_)),
-                            "prosecutor":1 / np.float64(np.min(x_))
+class Sample(Risk):
+    """
+    This class will compute risk for the sample dataset: the marketer and prosecutor risk are computed by default.
+    This class can optionally add pitman risk if the population size is known.
+    """
+    def __init__(self):
+        Risk.__init__(self)
+    def marketer(self):
+        """
+        computing marketer risk for sample dataset
+        """
+        groups = self.cache['groups']
+        group_count = groups.size
+        row_count   = groups.sum()
+        return group_count / np.float64(row_count)
 
-                        }
-                    ]
-                ).join(policy)
-            )
-            # g_size = x_.size
-            # n_ids = np.float64(np.sum(x_))  
-            # sql = """
-            #  SELECT COUNT(g_size) as group_count, :patient_count as patient_count,SUM(g_size) as rec_count, COUNT(g_size)/SUM(g_size) as marketer, 1/ MIN(g_size) as prosecutor, :n as field_count
-            #     FROM (
-            #     SELECT COUNT(*) as g_size,:key,:fields
-            #     FROM :full_name
-            #     GROUP BY :fields
-            # """.replace(":n",str(n)).replace(":fields",",".join(cols)).replace(":key",id).replace(":patient_count",str(N))
-            # r.append(self._df.query(sql.replace("\n"," ").replace("\r"," ") ))
+    def prosecutor(self):
+        """
+        The prosecutor risk consists in determining 1 over the smallest group size
+        It identifies if there is at least one record that is unique
+        """
+        groups = self.cache['groups']
+        return 1 / np.float64(groups.min())
+    def unique_ratio(self):
+        groups = self.cache['groups']        
+        row_count = groups.sum()
+        return groups[groups == 1].sum() / np.float64(row_count)
 
-        return r
+    def pitman(self):
+        """
+        This function will approximate pitman de-identification risk based on pitman sampling
+        """
+        groups = self.cache['groups']
+        si = groups[groups == 1].size
+        u = groups.size
+        alpha = np.divide(si , np.float64(u) )
+        f = np.divide(groups.sum(), np.float64(self.cache['pop_size']))
+        return np.power(f,1-alpha)
 
+class Population(Sample):
+    """
+    This class will compute risk for datasets that have population information or datasets associated with them.
+    This computation includes pitman risk (it requires minimal information about population)
+    """
+    def __init__(self,**args):
+        Sample.__init__(self)
 
-# df = pd.read_gbq("select * from deid_risk.risk_30k",private_key='/home/steve/dev/google-cloud-sdk/accounts/curation-test.json')
-# r =  df.deid.risk(id='person_id',num_runs=200)
-# print r[['field_count','patient_count','marketer','prosecutor']]
-
-
+    def set(self,key,value):
+        Sample.set(key,value)
+        if key == 'merged_groups' :
+            Sample.set('pop_size',np.float64(r.population_group_sizes.sum()) )
+    """
+    This class will measure risk and account for the existance of a population
+    :merged_groups {sample_group_size, population_group_size} is a merged dataset with group sizes of both population and sample
+    """
+    def marketer(self):
+        """
+        This function requires
+        """
+        r = self.cache['merged_groups']
+        sample_row_count = r.sample_group_size.sum() 
+        #
+        # @TODO : make sure the above line is size (not sum)
+        # sample_row_count = r.sample_group_size.size
+        return r.apply(lambda row: (row.sample_group_size / np.float64(row.population_group_size)) /np.float64(sample_row_count) ,axis=1).sum()
