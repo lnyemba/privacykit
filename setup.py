@@ -10,5 +10,5 @@ setup(
     author_email = "steve.l.nyemba@vanderbilt.edu",
     license = "MIT",
 
-    packages = ['numpy','pandas']
+    install_requires = ['numpy','pandas']
     )
