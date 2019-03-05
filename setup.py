@@ -6,5 +6,10 @@ from setuptools import setup, find_packages
 setup(
     name = "risk",
     version = "0.1",
-    packages = find_packages()
+    author = "Health Information Privacy Lab",
+    author_email = "steve.l.nyemba@vanderbilt.edu",
+    license = "MIT",
+
+    packages = ['numpy','pandas'],
+    install_requires = ['numpy','pandas']
     )
