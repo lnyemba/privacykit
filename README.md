@@ -1,17 +1,17 @@
 # Re-Identification Risk
 
 This framework computes re-identification risk of a dataset by extending pandas. It works like a pandas **add-on** 
-The framework will compute the following risk measures: marketer, prosecutor, journalist and pitman risk.
+The framework will compute the following risk measures: marketer, prosecutor, journalist and pitman risk. References for the risk measures can be found on [http://ehelthinformation.ca] (http://www.ehealthinformation.ca/wp-content/uploads/2014/08/2009-De-identification-PA-whitepaper1.pdf) and [https://www.scb.se/contentassets](https://www.scb.se/contentassets/ff271eeeca694f47ae99b942de61df83/applying-pitmans-sampling-formula-to-microdata-disclosure-risk-assessment.pdf)
+
 There are two modes available :
     
 **explore:**
 
-        Here the assumption is that we are not sure of the attributes to be disclosed, 
-        The framework will explore a variety of combinations and associate risk measures every random combinations it can come up with
+Here the assumption is that we are not sure of the attributes to be disclosed, the framework will randomly generate random combinations of attributes and evaluate them accordingly as it provides all the measures of risk. 
 
 **evaluation**
 
-        Here the assumption is that we are clear on the sets of attributes to be used and we are interested in computing the associated risk.
+Here the assumption is that we are clear on the sets of attributes to be used and we are interested in computing the associated risk.
 
 
 ### Four risk measures are computed :
@@ -23,7 +23,8 @@ There are two modes available :
 
 ### Usage:
 
-The framework will depend on pandas and numpy (for now)
+The framework will depend on pandas and numpy (for now). Below is a basic sample to get started quickly.
+
 
     import numpy as np
     import pandas as pd
@@ -42,11 +43,6 @@ The framework will depend on pandas and numpy (for now)
     pop = pd.DataFrame({"x":np.random.choice( np.random.randint(1,10),150),"y":np.random.choice( np.random.randint(1,10),150) ,"q":np.random.choice( np.random.randint(1,10),150)})
     mydf.risk.evaluate(pop=pop)
 
-### References :
-
-[http://ehelthinformation.ca] (http://www.ehealthinformation.ca/wp-content/uploads/2014/08/2009-De-identification-PA-whitepaper1.pdf)
-
-[https://www.scb.se/contentassets](https://www.scb.se/contentassets/ff271eeeca694f47ae99b942de61df83/applying-pitmans-sampling-formula-to-microdata-disclosure-risk-assessment.pdf)
 
 @TODO:
     - Evaluation of how sparse attributes are (the ratio of non-null over rows)
