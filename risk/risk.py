@@ -60,7 +60,7 @@ class deid :
         @param pop|sample   data-frame with popublation reference
         @param id       key field that uniquely identifies patient/customer ...
         """
-        id = args['id']
+        
         pop= args['pop'] if 'pop' in args else None
         
         if 'pop_size' in args :
@@ -77,7 +77,11 @@ class deid :
         sample = args['sample'] if 'sample' in args else pd.DataFrame(self._df)
         
         k = sample.columns.size -1 if 'field_count' not in args else int(args['field_count'])
-        columns = list(set(sample.columns.tolist()) - set([id]))
+        if 'id' in args :
+            id = args['id']
+            columns = list(set(sample.columns.tolist()) - set([id]))
+        else:
+            columns = sample.columns.tolist()
         o = pd.DataFrame()
         
         for i in np.arange(RUNS):
@@ -152,8 +156,6 @@ class deid :
                 handle_sample.set('pop_size',pop_size)
                 r['pitman risk'] = handle_sample.pitman()
         if 'pop' in args :
-            print cols
-            print args['pop'].columns
             xi = pd.DataFrame({"sample_group_size":sample.groupby(cols,as_index=False).size()}).reset_index()
             yi = pd.DataFrame({"population_group_size":args['pop'].groupby(cols,as_index=False).size()}).reset_index()
             merged_groups = pd.merge(xi,yi,on=cols,how='inner')

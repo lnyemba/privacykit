@@ -41,7 +41,7 @@ The framework will depend on pandas and numpy (for now). Below is a basic sample
     import pandas as pd
     from pandas_risk import *
 
-    mydf = pd.DataFrame({"x":np.random.choice( np.random.randint(1,10),50),"y":np.random.choice( np.random.randint(1,10),50) })
+    mydf = pd.DataFrame({"x":np.random.choice( np.random.randint(1,10),50),"y":np.random.choice( np.random.randint(1,10),50),"z":np.random.choice( np.random.randint(1,10),50),"r":np.random.choice( np.random.randint(1,10),50)  })
     print mydf.risk.evaluate()
 
 
@@ -51,7 +51,7 @@ The framework will depend on pandas and numpy (for now). Below is a basic sample
     #   - Insure the population size is much greater than the sample size 
     #   - Insure the fields are identical in both sample and population
     #
-    pop = pd.DataFrame({"x":np.random.choice( np.random.randint(1,10),150),"y":np.random.choice( np.random.randint(1,10),150) ,"q":np.random.choice( np.random.randint(1,10),150)})
+    pop = pd.DataFrame({"x":np.random.choice( np.random.randint(1,10),150),"y":np.random.choice( np.random.randint(1,10),150) ,"z":np.random.choice( np.random.randint(1,10),150),"r":np.random.choice( np.random.randint(1,10),150)})
     mydf.risk.evaluate(pop=pop)
 
 
