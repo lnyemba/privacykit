@@ -1,7 +1,11 @@
+"""
 # Re-Identification Risk
 
 This framework computes re-identification risk of a dataset by extending pandas. It works like a pandas **add-on** 
-The framework will compute the following risk measures: marketer, prosecutor, journalist and pitman risk. References for the risk measures can be found on [http://ehelthinformation.ca] (http://www.ehealthinformation.ca/wp-content/uploads/2014/08/2009-De-identification-PA-whitepaper1.pdf) and [https://www.scb.se/contentassets](https://www.scb.se/contentassets/ff271eeeca694f47ae99b942de61df83/applying-pitmans-sampling-formula-to-microdata-disclosure-risk-assessment.pdf)
+The framework will compute the following risk measures: marketer, prosecutor, journalist and pitman risk. 
+References for the risk measures can be found on 
+ - http://www.ehealthinformation.ca/wp-content/uploads/2014/08/2009-De-identification-PA-whitepaper1.pdf
+ - https://www.scb.se/contentassets/ff271eeeca694f47ae99b942de61df83/applying-pitmans-sampling-formula-to-microdata-disclosure-risk-assessment.pdf
 
 There are two modes available :
     
@@ -61,3 +65,5 @@ The framework will depend on pandas and numpy (for now). Below is a basic sample
 Basic examples that illustrate usage of the the framework are in the notebook folder. The example is derived from 
 
 	
+"""
+from risk import deid
