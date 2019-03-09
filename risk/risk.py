@@ -57,8 +57,10 @@ class deid :
         This function will perform experimentation by performing a random policies (combinations of attributes)
         This function is intended to explore a variety of policies and evaluate their associated risk.
 
-        @param pop|sample   data-frame with popublation reference
-        @param id       key field that uniquely identifies patient/customer ...
+        :pop|sample     data-frame with population or sample reference
+        :field_count    number of fields to randomly select
+        :strict         if set the field_count is exact otherwise field_count is range from 2-field_count
+        :num_runs       number of runs (by default 5)
         """
         
         pop= args['pop'] if 'pop' in args else None
@@ -76,7 +78,7 @@ class deid :
         
         sample = args['sample'] if 'sample' in args else pd.DataFrame(self._df)
         
-        k = sample.columns.size if 'field_count' not in args else int(args['field_count']) + 1
+        k = sample.columns.size if 'field_count' not in args else int(args['field_count']) +1
         if 'id' in args :
             id = args['id']
             columns = list(set(sample.columns.tolist()) - set([id]))
@@ -85,8 +87,10 @@ class deid :
         o = pd.DataFrame()
         
         for i in np.arange(RUNS):
-            n = np.random.randint(2,k)
-            
+            if 'strict' not in args or ('strict' in args and args['strict'] is False):
+                n = np.random.randint(2,k)
+            else:
+                n = args['field_count']
             cols = np.random.choice(columns,n,replace=False).tolist()            
             params = {'sample':sample,'cols':cols}
             if pop is not None :
