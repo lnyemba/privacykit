@@ -76,7 +76,7 @@ class deid :
         
         sample = args['sample'] if 'sample' in args else pd.DataFrame(self._df)
         
-        k = sample.columns.size if 'field_count' not in args else int(args['field_count']) + 1
+        k = sample.columns.size if 'field_count' not in args else int(args['field_count']) +1
         if 'id' in args :
             id = args['id']
             columns = list(set(sample.columns.tolist()) - set([id]))
@@ -85,8 +85,10 @@ class deid :
         o = pd.DataFrame()
         
         for i in np.arange(RUNS):
-            n = np.random.randint(2,k)
-            
+            if 'strict' not in args :
+                n = np.random.randint(2,k)
+            else:
+                n = args['field_count']
             cols = np.random.choice(columns,n,replace=False).tolist()            
             params = {'sample':sample,'cols':cols}
             if pop is not None :
