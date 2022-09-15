@@ -27,19 +27,19 @@ Install this package using pip as follows :
 
 Stable :
     
-    pip install git+https://hiplab.mc.vanderbilt.edu/git/steve/deid-risk.git
+    pip install git+https://dev.the-phi.com/git/healthcareio/privacykit.git@release
     
     
 Latest Development (not fully tested):
     
-    pip install git+https://hiplab.mc.vanderbilt.edu/git/steve/deid-risk.git@risk
+    pip install git+https://dev.the-phi.com/git/healthcareio/privacykit.git@dev
     
 The framework will depend on pandas and numpy (for now). Below is a basic sample to get started quickly.
 
 
     import numpy as np
     import pandas as pd
-    import risk
+    import privacykit
 
     mydf = pd.DataFrame({"x":np.random.choice( np.random.randint(1,10),50),"y":np.random.choice( np.random.randint(1,10),50),"z":np.random.choice( np.random.randint(1,10),50),"r":np.random.choice( np.random.randint(1,10),50)  })
     print (mydf.risk.evaluate())

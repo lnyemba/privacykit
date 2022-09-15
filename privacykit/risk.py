@@ -107,38 +107,25 @@ class deid :
         for size in np.arange(2,len(columns)) :
             p = list(combinations(columns,size))            
             p = (np.array(p)[ np.random.choice( len(p), _policy_count)].tolist())
-            flag = 'Policy_'+str(_index)
-            _index += 1
+            
+            
             for cols in p :
+                flag = 'Policy_'+str(_index)
                 r = self.evaluate(sample=sample,cols=cols,flag = flag)
                 p =  pd.DataFrame(1*sample.columns.isin(cols)).T
                 p.columns = sample.columns
                 o = pd.concat([o,r.join(p)])
-        
+                o['attr'] = ','.join(cols)
+                _index += 1
+        #
+        # We rename flags to policies and adequately number them, we also have a column to summarize the attributes attr
+        #
            
-        # for i in np.arange(RUNS):
-        #     if 'strict' not in args or ('strict' in args and args['strict'] is False):
-        #         n = np.random.randint(2,k)
-        #     else:
-        #         n = args['field_count']
-        #     cols = np.random.choice(columns,n,replace=False).tolist()            
-        #     params = {'sample':sample,'cols':cols}
-        #     if pop is not None :
-        #         params['pop'] = pop
-        #     if pop_size > 0  :
-        #         params['pop_size'] = pop_size
-
-        #     r = self.evaluate(**params)
-        #     #
-        #     # let's put the policy in place
-        #     p =  pd.DataFrame(1*sample.columns.isin(cols)).T
-        #     p.columns = sample.columns
-        #     # o = o.append(r.join(p))
-        #     o = pd.concat([o,r.join(p)])
+      
 
             
         o.index = np.arange(o.shape[0]).astype(np.int64)
-
+        o = o.rename(columns={'flag':'policies'})
         return o
     def evaluate(self, **args):
         """
