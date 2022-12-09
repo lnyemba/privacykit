@@ -69,7 +69,7 @@ class deid :
         if _columns :
             self._compute = Compute(sample = _sample,columns=_columns)
         else:
-            self._comput = Compute(sample=_sample)
+            self._compute = Compute(sample=_sample)
         self._pcompute= Population()  
 
     def explore(self,**args):
@@ -354,7 +354,7 @@ class Compute(Risk):
         self.cache['count']['fields'] = len(self._columns)
         if self._sample.shape[0] > 0 and self._columns:
             _sample = _args ['sample']
-            _groups = self._sample.groupby(self._columns,as_index=False).count().values
+            _groups = self._sample.groupby(self._columns,as_index=False).size().values
             self.set('groups',_groups)
     
             self.cache['count']['groups']  = len(_groups)

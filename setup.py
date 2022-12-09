@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
  
 setup(
     name = "privacykit",
-    version = "0.9.0",
+    version = "0.9.2",
     author = "Healthcare/IO - The Phi Technology LLC & Health Information Privacy Lab",
     author_email = "info@the-phi.com",
     license = "MIT",
